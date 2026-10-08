@@ -2,34 +2,15 @@ import { useState } from "react";
 import { Link } from "react-router-dom";
 import { productBySku } from "../catalog";
 import { money, priceFor } from "../pricing";
+import { parseQuickOrder, type ParsedSku } from "../quickorder";
 import { useStore } from "../store";
 import { useTitle } from "../title";
-
-interface Parsed {
-  raw: string;
-  sku: string;
-  qty: number;
-  known: boolean;
-}
-
-function parse(text: string): Parsed[] {
-  return text
-    .split(/\r?\n/)
-    .map((line) => line.trim())
-    .filter(Boolean)
-    .map((raw) => {
-      const parts = raw.split(/[\s,]+/).filter(Boolean);
-      const sku = parts[0] ?? "";
-      const qty = Math.min(99, Math.max(1, Number(parts[1] ?? "1") || 1));
-      return { raw, sku, qty, known: Boolean(productBySku(sku)) };
-    });
-}
 
 export function QuickOrder() {
   useTitle("Quick order · Larken Contract");
   const { addToCart, tier } = useStore();
   const [text, setText] = useState("HL-LNG-01 2\nKL-TSK-01 8\nAR-LMP-01 2");
-  const [rows, setRows] = useState<Parsed[] | null>(null);
+  const [rows, setRows] = useState<ParsedSku[] | null>(null);
   const [done, setDone] = useState(false);
 
   return (
@@ -46,7 +27,7 @@ export function QuickOrder() {
         className="stack"
         onSubmit={(event) => {
           event.preventDefault();
-          const parsed = parse(text);
+          const parsed = parseQuickOrder(text);
           setRows(parsed);
           setDone(false);
         }}
