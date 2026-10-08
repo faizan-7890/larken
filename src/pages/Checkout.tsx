@@ -1,9 +1,10 @@
 import { useState, type FormEvent } from "react";
 import { Link, Navigate, useNavigate } from "react-router-dom";
 import { describeCart } from "../cartview";
+import { checkoutErrors } from "../checkoutRules";
 import { Field } from "../components/Field";
 import { Totals } from "../components/ProductCard";
-import { money, tierLabel } from "../pricing";
+import { money, tierLabel, WHITE_GLOVE } from "../pricing";
 import { useStore, type CheckoutDraft } from "../store";
 import { useTitle } from "../title";
 
@@ -50,19 +51,7 @@ export function Checkout() {
 
   function submit(event: FormEvent) {
     event.preventDefault();
-    const next: Record<string, string> = {};
-    if (!form.company.trim()) next.company = "Name the company receiving the goods.";
-    if (!form.contact.trim()) next.contact = "Name the person who will sign for them.";
-    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(form.email.trim())) next.email = "The desk needs a real email shape.";
-    if (!form.line1.trim() || !form.city.trim() || !form.region.trim() || !form.postal.trim()) {
-      next.ship = "Ship-to needs a street, city, state, and postal code.";
-    }
-    if (tier === "enterprise" && !form.po.trim()) next.po = "Contract orders need a purchase order.";
-    const digits = form.card.replace(/\s/g, "");
-    if (!/^\d{13,19}$/.test(digits)) next.card = "Enter a card number. It is checked for shape and discarded.";
-    if (!/^\d{2}\s*\/\s*\d{2}$/.test(form.exp.trim())) next.exp = "Use MM/YY.";
-    if (!/^\d{3,4}$/.test(form.cvc.trim())) next.cvc = "CVC is three or four digits. It is not stored.";
-    if (!form.cardName.trim()) next.cardName = "Name the card.";
+    const next = checkoutErrors(form, tier);
     setErrors(next);
     if (Object.keys(next).length > 0) return;
 
@@ -163,7 +152,7 @@ export function Checkout() {
             </div>
             <label className="check">
               <input type="checkbox" checked={whiteGlove} onChange={(event) => setWhiteGlove(event.target.checked)} />
-              White-glove to the room, +{money(280)}
+              White-glove to the room, +{money(WHITE_GLOVE)}
             </label>
           </section>
           <section>
