@@ -60,6 +60,7 @@ function desk() {
 
 beforeEach(() => {
   localStorage.clear();
+  window.scrollTo = () => {};
   cleanup();
 });
 
@@ -146,7 +147,9 @@ describe("store actions", () => {
     expect(result.current.cart).toHaveLength(2);
 
     expect(result.current.signIn("studio@fieldwork.design", "nope")).toMatch(/not on the demo desk/i);
-    expect(result.current.signIn("studio@fieldwork.design", "trade")).toBeNull();
+    act(() => {
+      expect(result.current.signIn("studio@fieldwork.design", "trade")).toBeNull();
+    });
     expect(result.current.tier).toBe("trade");
     expect(result.current.user?.terms).toBe("Net 30");
 
@@ -166,7 +169,9 @@ describe("store actions", () => {
     act(() => result.current.addToCart("cinder-vessel", "ash", 2));
     expect(result.current.applyPromo("NOPE")).toMatch(/not on this schedule/i);
     expect(result.current.promo).toBeNull();
-    expect(result.current.applyPromo("larken10")).toBeNull();
+    act(() => {
+      expect(result.current.applyPromo("larken10")).toBeNull();
+    });
     expect(result.current.promo).toBe(PROMO_CODE);
 
     const expected = describeCart(result.current.cart, result.current.tier, result.current.promo, false);
@@ -194,7 +199,9 @@ describe("store actions", () => {
 
   it("signs the contract desk in at net 45", () => {
     const { result } = desk();
-    expect(result.current.signIn("procurement@northline.com", "enterprise")).toBeNull();
+    act(() => {
+      expect(result.current.signIn("procurement@northline.com", "enterprise")).toBeNull();
+    });
     expect(result.current.tier).toBe("enterprise");
     expect(result.current.user?.terms).toBe("Net 45");
   });
@@ -277,7 +284,7 @@ describe("quick order and checkout", () => {
     expect(api!.orders.some((order) => order.email === "procurement@northline.com" && order.po === "")).toBe(false);
 
     const expected = describeCart(api!.cart, api!.tier, api!.promo, true);
-    fireEvent.change(screen.getByLabelText("Purchase order"), { target: { value: "PO-900" } });
+    fireEvent.change(screen.getByLabelText(/Purchase order/), { target: { value: "PO-900" } });
     fireEvent.click(screen.getByRole("button", { name: "Place order" }));
 
     const placed = api!.orders.find((order) => order.po === "PO-900");
